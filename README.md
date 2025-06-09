@@ -1,0 +1,1 @@
+# PersonalAi-FRIDAY-V2

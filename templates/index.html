@@ -10,6 +10,16 @@
   <div class="container">
     <h1>F.R.I.D.A.Y.</h1>
     <p>Your futuristic voice assistant. Speak to access intelligence.</p>
+
+    <div style="margin-bottom:18px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <label for="langSelect" style="color:#39ff14;font-size:0.95rem;">Recognition Language:</label>
+      <select id="langSelect" style="padding:6px 12px;border-radius:8px;border:1px solid #23232a;background:#18181c;color:#39ff14;font-size:1rem;">
+        <option value="en-US">English</option>
+        <option value="tr-TR">Turkish</option>
+        <option value="de-DE">German</option>
+        <option value="fr-FR">French</option>
+      </select>
+    </div>
     <button onclick="startRecognition()">🎤 Activate Voice</button>
     <button id="stopBtn" onclick="stopRecognition()" disabled>⏹️ Stop</button>
 

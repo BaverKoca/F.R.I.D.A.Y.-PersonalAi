@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRIDAY - AI Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>F.R.I.D.A.Y.</h1>
+    <p>Your futuristic voice assistant. Speak to access intelligence.</p>
+    <button onclick="startRecognition()">🎤 Activate Voice</button>
+    <button id="stopBtn" onclick="stopRecognition()" disabled>⏹️ Stop</button>
+
+    <div class="output-group">
+      <div class="label">You said:</div>
+      <div class="output" id="userText">...</div>
+
+      <div class="label">FRIDAY’s Response:</div>
+      <div class="output" id="responseText">...</div>
+
+      <div id="loader">Processing your request...</div>
+    </div>
+  </div>
+  <script src="/static/script.js"></script>
+  <script>
+    // Enable/disable stop button from JS
+    document.getElementById('stopBtn').disabled = true;
+  </script>
+</body>
+</html>

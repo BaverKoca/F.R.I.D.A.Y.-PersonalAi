@@ -3,9 +3,9 @@
 let recognition = null;
 
 function speak(text) {
-  const lang = document.getElementById('langSelect').value;
+  // Default to English
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
+  utterance.lang = "en-US";
   utterance.pitch = 1;
   utterance.rate = 1;
   utterance.volume = 1;
@@ -22,8 +22,8 @@ function startRecognition() {
     recognition.abort();
     recognition = null;
   }
-  // Get selected language
-  const lang = document.getElementById('langSelect').value;
+  // Default to English
+  const lang = "en-US";
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = lang;
   recognition.interimResults = false;

@@ -3,6 +3,7 @@
 let recognition = null;
 
 function speak(text) {
+  // Default to English
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
   utterance.pitch = 1;
@@ -21,8 +22,10 @@ function startRecognition() {
     recognition.abort();
     recognition = null;
   }
+  // Default to English
+  const lang = "en-US";
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  recognition.lang = "en-US";
+  recognition.lang = lang;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 

@@ -1,13 +1,8 @@
 # app.py
 from flask import Flask, request, jsonify, render_template
-import google.generativeai as genai
-from config import GEMINI_API_KEY
+import requests
 
 app = Flask(__name__)
-
-# Configure the Gemini API
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
 
 @app.route("/")
 def index():
@@ -19,8 +14,21 @@ def ask():
     user_input = data.get("question", "")
 
     try:
-        response = model.generate_content(user_input)
-        return jsonify({"response": response.text.strip()})
+        # Call local Nous-Hermes LLM (OpenAI-compatible endpoint)
+        response = requests.post(
+            "http://localhost:5001/v1/chat/completions",
+            headers={"Content-Type": "application/json"},
+            json={
+                "model": "nous-hermes",
+                "messages": [
+                    {"role": "user", "content": user_input}
+                ]
+            },
+            timeout=60
+        )
+        result = response.json()
+        ai_text = result["choices"][0]["message"]["content"].strip()
+        return jsonify({"response": ai_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -51,7 +51,3 @@ FRIDAY is a minimalist, modern, and professional AI voice assistant web app powe
 
 ## License
 MIT License
-
----
-
-*Created by Baver Koca, 2025.*

@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from newspaper import Article
+from functools import lru_cache
+import threading
 
 load_dotenv()
 
@@ -28,7 +30,32 @@ def google_search(query):
         return snippet
     return "No answer found."
 
-def fetch_main_text(url):
+def summarize_chunk(chunk, user_question, timeout=30):
+    prompt = f"Summarize the following web content for answering the user's question: {user_question}\n\nContent:\n{chunk}"
+    result = {'summary': ''}
+    def worker():
+        try:
+            response = requests.post(
+                "http://localhost:11434/v1/chat/completions",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "model": "nous-hermes",
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ]
+                },
+                timeout=timeout
+            )
+            data = response.json()
+            result['summary'] = data["choices"][0]["message"]["content"].strip()
+        except Exception:
+            result['summary'] = ''
+    t = threading.Thread(target=worker)
+    t.start()
+    t.join(timeout)
+    return result['summary']
+
+def fetch_main_text(url, user_question=None, snippet_fallback=None):
     try:
         article = Article(url)
         article.download()
@@ -38,9 +65,27 @@ def fetch_main_text(url):
         keywords = ["menu", "footer", "advert", "cookie", "privacy", "subscribe", "sign up", "login", "copyright", "all rights reserved", "contact", "newsletter", "terms", "policy", "related articles", "share"]
         filtered = [line for line in lines if not any(kw in line.lower() for kw in keywords)]
         cleaned = '\n'.join(filtered)
-        return cleaned[:1000]
+        # Chunking and summarization: only use the first chunk (faster)
+        chunk_size = 800
+        chunks = [cleaned[i:i+chunk_size] for i in range(0, len(cleaned), chunk_size)]
+        if not chunks or not chunks[0].strip():
+            return snippet_fallback or "No content found."
+        chunk = chunks[0]  # Only summarize the first chunk
+        if user_question:
+            summary = summarize_chunk(chunk, user_question, timeout=30)
+            if summary:
+                return summary
+            else:
+                return snippet_fallback or chunk
+        else:
+            return chunk
     except Exception:
-        return ""
+        return snippet_fallback or "No content found."
+
+# Simple in-memory cache for repeated queries (not persistent, resets on restart)
+@lru_cache(maxsize=128)
+def cached_fetch_main_text(url, user_question, snippet_fallback):
+    return fetch_main_text(url, user_question, snippet_fallback)
 
 @app.route("/")
 def index():
@@ -62,25 +107,43 @@ def ask():
         # French
         "qui", "quoi", "quand", "où", "pourquoi", "comment", "définir", "information", "rechercher", "trouver", "montrer", "météo", "nouvelles", "capitale", "population", "distance", "signification", "expliquer",
     ]
+    show_keywords = ["show", "göster", "montrer", "zeigen"]
+    user_words = [w.strip(".,!?") for w in user_input.lower().split()]
+    open_images = any(kw in user_words for kw in show_keywords)
+
     if any(word in user_input.lower() for word in search_keywords):
-        # Google search for top 3 results (no domain filtering)
+        # Google search for top 1 result (unless user asks for more)
         url = "https://www.googleapis.com/customsearch/v1"
+        more_keywords = ["more", "daha fazla", "mehr", "plus"]
+        num_results = 1
+        if any(word in user_input.lower() for word in more_keywords):
+            num_results = 3
         params = {
             "key": GOOGLE_API_KEY,
             "cx": GOOGLE_CSE_ID,
             "q": user_input,
-            "num": 3
+            "num": num_results
         }
         resp = requests.get(url, params=params)
         data = resp.json()
         snippets = []
+        first_link = None
         if "items" in data:
-            for item in data["items"]:
+            for idx, item in enumerate(data["items"]):
                 link = item.get("link")
+                snippet = item.get("snippet", "No snippet available.")
+                if idx == 0:
+                    first_link = link
                 if link:
-                    text = fetch_main_text(link)
+                    # Use cache for repeated queries
+                    text = cached_fetch_main_text(link, user_input, snippet)
                     if text:
                         snippets.append(f"Source: {link}\n{text}")
+                if idx == 0 and num_results == 1:
+                    break  # Only process the first result unless user asks for more
+        if not snippets:
+            # If no web content found, fallback to LLM only
+            return jsonify({"response": "Sorry, I couldn't find relevant web results. Please try rephrasing your question.", "open_images": open_images, "query": user_input})
         context = '\n\n'.join(snippets)
         prompt = f"Use the following web sources to answer the user's question as truthfully as possible.\n\n{context}\n\nUser question: {user_input}"
         # Call LLM with web context
@@ -94,13 +157,14 @@ def ask():
                         {"role": "user", "content": prompt}
                     ]
                 },
-                timeout=120
+                timeout=60
             )
             result = response.json()
             ai_text = result["choices"][0]["message"]["content"].strip()
-            return jsonify({"response": ai_text})
+            # Return both the answer and the open_images flag
+            return jsonify({"response": ai_text, "open_images": open_images, "query": user_input})
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"response": f"Error: {str(e)}", "open_images": open_images, "query": user_input})
     try:
         # Call local Nous-Hermes LLM via Ollama (OpenAI-compatible endpoint)
         response = requests.post(
@@ -116,9 +180,9 @@ def ask():
         )
         result = response.json()
         ai_text = result["choices"][0]["message"]["content"].strip()
-        return jsonify({"response": ai_text})
+        return jsonify({"response": ai_text, "open_images": False, "query": user_input})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"response": f"Error: {str(e)}", "open_images": False, "query": user_input})
 
 if __name__ == "__main__":
     app.run(debug=True)

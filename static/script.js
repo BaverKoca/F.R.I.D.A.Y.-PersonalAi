@@ -3,9 +3,17 @@
 let recognition = null;
 
 function speak(text) {
-  // Default to English
+  // Detect language of the text for correct pronunciation
+  let lang = 'en-US';
+  if (/\p{Script=Latin}/u.test(text) && /[çğıöşüÇĞİÖŞÜ]/.test(text)) {
+    lang = 'tr-TR'; // Turkish special chars detected
+  } else if (/\p{Script=Latin}/u.test(text) && /[äöüßÄÖÜ]/.test(text)) {
+    lang = 'de-DE'; // German special chars detected
+  } else if (/\p{Script=Latin}/u.test(text) && /[éèêçàùâîôûëïüœæ]/i.test(text)) {
+    lang = 'fr-FR'; // French special chars detected
+  }
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
+  utterance.lang = lang;
   utterance.pitch = 1;
   utterance.rate = 1;
   utterance.volume = 1;
@@ -89,3 +97,41 @@ function stopRecognition() {
     document.getElementById('stopBtn').disabled = true;
   }
 }
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+  document.getElementById('userText').textContent = message;
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('responseText').textContent = '';
+  fetch('/ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: message })
+  })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('loader').style.display = 'none';
+      if (data.response) {
+        document.getElementById('responseText').textContent = data.response;
+        speak(data.response);
+        searchOnGoogle(message);
+      } else {
+        document.getElementById('responseText').textContent = 'Error: ' + data.error;
+      }
+    })
+    .catch(error => {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('responseText').textContent = 'Request failed.';
+      console.error('Error:', error);
+    });
+  input.value = '';
+}
+
+document.getElementById('chatInput').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    sendChat();
+  }
+});

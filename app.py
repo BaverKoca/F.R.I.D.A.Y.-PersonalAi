@@ -14,9 +14,9 @@ def ask():
     user_input = data.get("question", "")
 
     try:
-        # Call local Nous-Hermes LLM (OpenAI-compatible endpoint)
+        # Call local Nous-Hermes LLM via Ollama (OpenAI-compatible endpoint)
         response = requests.post(
-            "http://localhost:5001/v1/chat/completions",
+            "http://localhost:11434/v1/chat/completions",
             headers={"Content-Type": "application/json"},
             json={
                 "model": "nous-hermes",

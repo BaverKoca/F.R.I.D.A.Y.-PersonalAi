@@ -1,6 +1,10 @@
 # FRIDAY - Personal AI Voice Assistant
 
-FRIDAY is a modern, minimalist, and professional AI voice assistant web app powered by your local Nous-Hermes LLM. Speak your question, get an instant AI response, and see relevant Google search results—all in a clean, user-friendly interface.
+FRIDAY is a professional AI voice assistant web app powered by your local Nous-Hermes LLM. Speak your question, get an instant AI response, and see relevant Google search results—all in a clean, user-friendly interface.
+
+---
+
+![Image](https://github.com/user-attachments/assets/eb56e656-171e-42c5-abb0-e4b7bbf44567)
 
 ---
 
@@ -22,7 +26,7 @@ FRIDAY is a modern, minimalist, and professional AI voice assistant web app powe
 ### Installation
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/yourusername/PersonalAi-FRIDAY-V2.git
+   git clone https://github.com/BaverKoca/F.R.I.D.A.Y.-PersonalAi.git
    cd PersonalAi-FRIDAY-V2
    ```
 2. **Install dependencies:**

@@ -15,20 +15,26 @@ app = Flask(__name__)
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', 'your_google_api_key')
 GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID', 'your_custom_search_engine_id')
 
-def google_search(query):
+def google_search(query, num_results=2):
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
         "key": GOOGLE_API_KEY,
         "cx": GOOGLE_CSE_ID,
         "q": query,
-        "num": 1
+        "num": num_results
     }
     resp = requests.get(url, params=params)
     data = resp.json()
     if "items" in data and len(data["items"]) > 0:
-        snippet = data["items"][0].get("snippet", "No answer found.")
-        return snippet
-    return "No answer found."
+        return [
+            {
+                "title": item.get("title", "No title"),
+                "link": item.get("link", ""),
+                "snippet": item.get("snippet", "No answer found.")
+            }
+            for item in data["items"]
+        ]
+    return []
 
 def summarize_chunk(chunk, user_question, timeout=30):
     prompt = f"Summarize the following web content for answering the user's question: {user_question}\n\nContent:\n{chunk}"
@@ -66,7 +72,7 @@ def fetch_main_text(url, user_question=None, snippet_fallback=None):
         filtered = [line for line in lines if not any(kw in line.lower() for kw in keywords)]
         cleaned = '\n'.join(filtered)
         # Chunking and summarization: only use the first chunk (faster)
-        chunk_size = 800
+        chunk_size = 3200
         chunks = [cleaned[i:i+chunk_size] for i in range(0, len(cleaned), chunk_size)]
         if not chunks or not chunks[0].strip():
             return snippet_fallback or "No content found."
@@ -112,41 +118,27 @@ def ask():
     open_images = any(kw in user_words for kw in show_keywords)
 
     if any(word in user_input.lower() for word in search_keywords):
-        # Google search for top 1 result (unless user asks for more)
-        url = "https://www.googleapis.com/customsearch/v1"
         more_keywords = ["more", "daha fazla", "mehr", "plus"]
-        num_results = 1
+        num_results = 2
         if any(word in user_input.lower() for word in more_keywords):
             num_results = 3
-        params = {
-            "key": GOOGLE_API_KEY,
-            "cx": GOOGLE_CSE_ID,
-            "q": user_input,
-            "num": num_results
-        }
-        resp = requests.get(url, params=params)
-        data = resp.json()
+        search_results = google_search(user_input, num_results=num_results)
         snippets = []
         first_link = None
-        if "items" in data:
-            for idx, item in enumerate(data["items"]):
-                link = item.get("link")
-                snippet = item.get("snippet", "No snippet available.")
-                if idx == 0:
-                    first_link = link
-                if link:
-                    # Use cache for repeated queries
-                    text = cached_fetch_main_text(link, user_input, snippet)
-                    if text:
-                        snippets.append(f"Source: {link}\n{text}")
-                if idx == 0 and num_results == 1:
-                    break  # Only process the first result unless user asks for more
+        for idx, item in enumerate(search_results):
+            link = item.get("link", "")
+            snippet = item.get("snippet", "No snippet available.")
+            if idx == 0:
+                first_link = link
+            if link:
+                # Fetch and summarize main content, fallback to snippet
+                text = cached_fetch_main_text(link, user_input, snippet)
+                if text:
+                    snippets.append(f"Source: {link}\n{text}")
         if not snippets:
-            # If no web content found, fallback to LLM only
             return jsonify({"response": "Sorry, I couldn't find relevant web results. Please try rephrasing your question.", "open_images": open_images, "query": user_input})
         context = '\n\n'.join(snippets)
         prompt = f"Use the following web sources to answer the user's question as truthfully as possible.\n\n{context}\n\nUser question: {user_input}"
-        # Call LLM with web context
         try:
             response = requests.post(
                 "http://localhost:11434/v1/chat/completions",
@@ -161,7 +153,6 @@ def ask():
             )
             result = response.json()
             ai_text = result["choices"][0]["message"]["content"].strip()
-            # Return both the answer and the open_images flag
             return jsonify({"response": ai_text, "open_images": open_images, "query": user_input})
         except Exception as e:
             return jsonify({"response": f"Error: {str(e)}", "open_images": open_images, "query": user_input})

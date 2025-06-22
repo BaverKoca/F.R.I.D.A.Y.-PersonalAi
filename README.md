@@ -27,7 +27,7 @@ FRIDAY is a professional AI voice assistant web app powered by your local Nous-H
 1. **Clone the repository:**
    ```sh
    git clone https://github.com/BaverKoca/F.R.I.D.A.Y.-PersonalAi.git
-   cd PersonalAi-FRIDAY-V2
+   cd F.R.I.D.A.Y.-PersonalAi
    ```
 2. **Install dependencies:**
    ```sh

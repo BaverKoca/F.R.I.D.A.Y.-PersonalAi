@@ -2,14 +2,18 @@
 
 FRIDAY is a modern, minimalist, and professional AI voice assistant web app powered by your local Nous-Hermes LLM. Speak your question, get an instant AI response, and see relevant Google search results—all in a clean, user-friendly interface.
 
-## Features
-- 🎤 Voice recognition (activate and stop with a button)
-- 💬 Instant AI-powered answers (using local Nous-Hermes LLM)
-- 🌐 Automatic Google search for every query
-- 🖥️ Minimalist, responsive, and modern UI
-- 🔒 No data stored—your privacy is respected
+---
 
-## Getting Started
+## 🚀 Features
+- 🎤 **Voice Recognition:** Activate and stop with a button
+- 💬 **Instant AI Answers:** Powered by your local Nous-Hermes LLM
+- 🌐 **Automatic Google Search:** For every query
+- 🖥️ **Minimalist, Responsive UI:** Modern and user-friendly
+- 🔒 **Privacy-First:** No data stored, ever
+
+---
+
+## 🛠️ Getting Started
 
 ### Prerequisites
 - Python 3.8+
@@ -25,9 +29,8 @@ FRIDAY is a modern, minimalist, and professional AI voice assistant web app powe
    ```sh
    pip install -r requirements.txt
    ```
-3. **Start your local Nous-Hermes LLM server**
-   - Make sure your model is running and accessible at `http://localhost:5001/v1/chat/completions`.
-
+3. **Start your local Nous-Hermes LLM server:**
+   - Ensure your model is running and accessible at `http://localhost:5001/v1/chat/completions`.
 4. **Run the app:**
    ```sh
    python app.py
@@ -35,20 +38,26 @@ FRIDAY is a modern, minimalist, and professional AI voice assistant web app powe
 5. **Open your browser:**
    - Go to [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-## Usage
+---
+
+## 💡 Usage
 - Click **Activate Voice** and ask your question.
 - Click **Stop** to end recognition early.
 - The AI will answer and a Google search will open in a new tab for your query.
 
-## Technologies Used
-- Python, Flask
-- Local Nous-Hermes LLM (OpenAI-compatible API)
-- JavaScript (Web Speech API)
-- HTML5 & CSS3
+---
 
-## License
+## 🧰 Technologies Used
+- **Python, Flask**
+- **Local Nous-Hermes LLM** (OpenAI-compatible API)
+- **JavaScript** (Web Speech API)
+- **HTML5 & CSS3**
+
+---
+
+## 📄 License
 MIT License
 
 ---
 
-*Created by Baver Koca, 2025.*
+> *Created by Baver Koca, 2025.*
